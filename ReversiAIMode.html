@@ -1,0 +1,2780 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+
+    <title>Reversi Online</title>
+
+    <meta content="text/html; charset=utf-8" http-equiv="content-type">
+
+    <meta name="description" content="Play Reversi Online.Articles and news about love, dating, singles.">
+    <meta name="keywords" content="Reversi,game,online,othello,play.Singles,Love,Dating">
+
+    <link rel="stylesheet" type="text/css" href="css/default.css">
+
+    <style type="text/css">
+
+      .Dummy
+      {
+        background-color:dddddd;
+        font:22px bold;
+        color:#0000aa;
+        border:0px solid #fff;
+        text-align: left;
+        cursor:default
+      }
+
+      .cellover1
+      {
+        background-color: yellow;
+        border-bottom: 2px solid #000000;
+        border-right: 2px solid #000000;
+        border-left: 2px solid #000000;
+        border-top: 2px solid #000000;
+      }
+
+      .cellover2
+      {
+        background-color: limegreen;
+        border-bottom: 2px solid #eeeeee;
+        border-right: 2px solid #eeeeee;
+        border-left: 2px solid #eeeeee;
+        border-top: 2px solid #eeeeee;
+      }
+
+      .cellout
+      {
+        background-color: red
+        border-bottom: 2px solid #888888;
+        border-right: 2px solid #888888;
+        border-left: 2px solid #888888;
+        border-top: 2px solid #888888;
+      }
+
+      .classStatus
+      {
+        font: bold 1.0em "Trebuchet MS",sans-serif;
+        color:000055;
+        background-color: #eeeeee;
+        border-bottom: 2px solid #888888;
+        border-right: 2px solid #888888;
+        border-left: 2px solid #888888;
+        border-top: 2px solid #888888;
+      }
+
+    </style>
+
+    <script language="javascript" 
+            type="text/javascript">
+    <!-- 
+
+       var num_cells;
+       var cells;
+       var candidates;
+       var num_candidates;
+       var num_lines;
+       var num_columns;
+       var totals;
+       var options;
+       var capture;
+       var capture_len;
+       var phase;
+       var tmp_cells;
+       var tmp_totals;
+       var tmp_options;
+       var tmp_phase;
+       var mode;
+       var timerID;
+       var timeout;
+       var hlight_count;
+       var hlight_x;
+       var hlight_y;
+       var hlight_phase;
+       var state;
+       var game_ended;
+
+       rnd.today=new Date(); rnd.seed=rnd.today.getTime();
+
+       function Init_()
+       {
+         var i,n;
+
+         for (i=0; i<num_cells; i++)
+         {
+           n = "Cell" + i;
+           cells[i] = parseInt(document.getElementById(n).value);
+         }
+
+         totals[0]=60;
+         totals[1]=2;
+         totals[2]=2;
+
+         options[0]=0;
+         options[1]=4;
+         options[2]=4;
+
+         phase=1;
+         state=0;
+         game_ended=0;
+
+         SaveCells();
+         Redraw();
+         RedrawVars();
+       }
+
+       function Init()
+       {
+         var i,n;
+
+         cells = new Array();
+         tmp_cells = new Array();
+         totals = new Array();
+         tmp_totals = new Array();
+         options = new Array();
+         tmp_options = new Array();
+         capture = new Array();
+         candidates = new Array();
+         num_candidates=0;
+
+         capture_len=0;
+         mode=1;
+
+         num_cells = parseInt(document.getElementById('NumCells').value);
+         num_lines = parseInt(document.getElementById('NumLines').value);
+         num_columns = parseInt(document.getElementById('NumColumns').value);
+
+         for (i=0; i<num_cells; i++)
+         {
+           n = "Cell" + i;
+           cells[i] = parseInt(document.getElementById(n).value);
+         }
+
+         totals[0]=60;
+         totals[1]=2;
+         totals[2]=2;
+
+         options[0]=0;
+         options[1]=4;
+         options[2]=4;
+
+         phase=1;
+         state=0;
+         game_ended=0;
+
+         SaveCells();
+         Redraw();
+         RedrawVars();
+       }
+
+       function HighlightSelection()
+       {
+         var n,count=0;
+         timeout=500;
+
+         n = 'td' + '-' + hlight_x + '-' + hlight_y;
+         if ( hlight_count > 0 )
+         {
+           timerID  = setTimeout("HighlightSelection()", timeout);
+           if (hlight_count<4)
+           {
+             if (hlight_count%2)
+             {
+               document.getElementById(n).className="cellover"+hlight_phase;
+             }
+             else
+             {
+               document.getElementById(n).className="cellout";
+               //state=0;
+             }
+           }
+           hlight_count--;
+         }
+         else
+         {
+           clearTimeout(timerID);
+           timerID=0;
+           document.getElementById(n).className="cellout";
+
+           count = InvertSquare(hlight_x,hlight_y,2);
+           if ( count > 0 )
+           {
+             RecomputeVars(hlight_x,hlight_y,count);
+             Redraw();
+             RedrawVars();
+             state=0;
+           }
+         }
+       }
+
+       function Redraw_()
+       {
+         var i,n,x,y;
+         var fldId;
+         var Fld;
+         var img;
+
+         for (i=0; i<num_cells; i++)
+         {
+           n = "Cell" + i;
+           x = i + num_columns;
+           y = Math.floor(i - num_columns);
+           fldId='I'+x+'-'+y;
+           Fld = document.getElementById(fldId);
+           if ( cells[i] >= 0 )
+           {
+             img='ReversiAiImages/image_'+cells[i]+'.jpg';
+           }
+           else 
+           {
+             img='ReversiAiImages/base.jpg';
+           }
+           Fld.src=img;
+         }
+       }
+
+
+       function Redraw()
+       {
+         var i,n,x,y;
+         var fldId;
+         var Fld;
+         var img;
+
+         for (i=0; i<num_cells; i++)
+         {
+           n = "Cell" + i;
+           x = i % num_columns;
+           y = Math.floor(i / num_columns);
+           fldId='I'+x+'-'+y;
+           Fld = document.getElementById(fldId);
+           if ( cells[i] > 0 )
+           {
+             img='ReversiAiImages/image_'+cells[i]+'.png';
+           }
+           else 
+           {
+             img='ReversiAiImages/base.png';
+           }
+           Fld.src=img;
+         }
+       }
+
+
+       function RedrawVars()
+       {
+         var img;
+
+         img='ReversiAiImages/hand_'+phase+'.png';
+
+         document.getElementById("CurrPlay").innerHTML = "<img src='"+img+"'/>";
+         if (phase==1)
+         {
+           document.getElementById("TurnId").innerHTML = "&nbsp;&nbsp;&nbsp;Your turn&nbsp;&nbsp;&nbsp;";
+           document.getElementById("a2").className = "ClassTotal2";
+           document.getElementById("a1").className = "ClassTurn1";
+         }
+         else
+         {
+           document.getElementById("TurnId").innerHTML = "Computer turn";
+           document.getElementById("a1").className = "ClassTotal1";
+           document.getElementById("a2").className = "ClassTurn2";
+         }
+         document.getElementById("score1").innerHTML = totals[1];
+         document.getElementById("score2").innerHTML = totals[2];
+
+         /*
+         document.getElementById("options1").innerHTML = options[1];
+         document.getElementById("options2").innerHTML = options[2];
+         */
+       }
+
+       function SaveCells()
+       {
+         var i;
+
+         for (i=0; i<num_cells; i++)
+         {
+           tmp_cells[i] = cells[i];
+         }
+
+         tmp_totals[0]=totals[0];
+         tmp_totals[1]=totals[1];
+         tmp_totals[2]=totals[2];
+
+         tmp_options[0] = options[0];
+         tmp_options[1] = options[1];
+         tmp_options[2] = options[2];
+
+         tmp_phase = phase;
+       }
+
+       function RestoreCells()
+       {
+         var i;
+
+         for (i=0; i<num_cells; i++)
+         {
+           cells[i] = tmp_cells[i];
+         }
+
+         totals[0]=tmp_totals[0];
+         totals[1]=tmp_totals[1];
+         totals[2]=tmp_totals[2];
+
+         options[0] = tmp_options[0];
+         options[1] = tmp_options[1];
+         options[2] = tmp_options[2];
+
+         phase = tmp_phase;
+       }
+
+       function PassTurn()
+       {
+         if ( game_ended== 1 ) return;
+         var img;
+         if ( phase == 1 ) phase = 2;
+         else if ( phase == 2 ) phase = 1;
+
+         img='ReversiAiImages/hand_'+phase+'.png';
+         document.getElementById("CurrPlay").innerHTML = "<img src='"+img+"'/>";
+         if ( phase == 2 )
+         {
+           PcPlay();
+         }
+         document.getElementById("Pass").disabled = true;
+         document.getElementById("StatusId").value = "";
+         state=0;
+       }
+
+       function HandleSquare(x,y)
+       {
+         if ( game_ended== 1 ) return;
+         if ( state == 1 ) return;
+         //window.status="x="+x+" y="+y;
+
+         var count=0;
+
+         SaveCells();
+
+         count = InvertSquare(x,y,phase);
+         if ( count > 0 )
+         {
+           state=1;
+           UnSelect(x,y);
+           RecomputeVars(x,y,count);
+           Redraw();
+           RedrawVars();
+           if ( mode==1)
+           {
+             PcPlay();
+           }
+           else
+           {
+             state=0;
+           }
+         }
+       }
+
+       function rnd() 
+       {
+         rnd.seed = (rnd.seed*9301+49297) % 233280;
+         return rnd.seed/(233280.0);
+       }
+
+       function rand(modulo) 
+       {
+         return Math.ceil(rnd()*modulo)-1;
+       }
+
+       function PcPlay()
+       {
+         if ( game_ended== 1 ) return;
+         var i,x,y;
+         var cnt = BuildCandidates(2);
+
+         if (cnt>0)
+         {
+           i=Analize(cnt);
+           num_candidates=0;
+           x = i % num_columns;
+           y = Math.floor(i / num_columns);
+
+           hlight_count=4;
+           hlight_x=x;
+           hlight_y=y;
+           hlight_phase=2;
+           HighlightSelection();
+         }
+       }
+
+       function Analize(cnt)
+       {
+         var i,r,ind=-1;
+
+         for (i=0; i<num_candidates; i++)
+         {
+           if ( ( candidates[i] == 0 ) ||
+                ( candidates[i] == 7 ) ||
+                ( candidates[i] == 56 ) ||
+                ( candidates[i] == 63 ) )
+           {
+             ind = candidates[i];
+             break;
+           }
+         }
+
+         if ( ind != -1 )
+         {
+           return ind;
+         }
+
+         r = rand(cnt);
+
+         if ( ( candidates[r] != 9 ) && 
+              ( candidates[r] != 14 ) && 
+              ( candidates[r] != 49 ) &&
+              ( candidates[r] != 54 ) &&
+              ( candidates[r] != 1 ) &&
+              ( candidates[r] != 8 ) &&
+              ( candidates[r] != 6 ) &&
+              ( candidates[r] != 15 ) &&
+              ( candidates[r] != 48 ) &&
+              ( candidates[r] != 57 ) &&
+              ( candidates[r] != 55 ) &&
+              ( candidates[r] != 62 ) )
+         {
+           return (candidates[r]);
+         }
+
+         if ( ( candidates[r] == 9 ) && (cells[0]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 14 ) && (cells[7]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 49 ) && (cells[56]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 54 ) && (cells[63]==2) )
+         {
+           return (candidates[r]);
+         }                   
+
+         if ( ( candidates[r] == 1 ) && (cells[0]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 8 ) && (cells[0]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 6 ) && (cells[7]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 15 ) && (cells[7]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 48 ) && (cells[56]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 57 ) && (cells[56]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 55 ) && (cells[63]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 62 ) && (cells[63]==2) )
+         {
+           return (candidates[r]);
+         }                   
+
+         r = rand(cnt);
+
+         if ( ( candidates[r] != 9 ) && 
+              ( candidates[r] != 14 ) && 
+              ( candidates[r] != 49 ) &&
+              ( candidates[r] != 54 ) &&
+              ( candidates[r] != 1 ) &&
+              ( candidates[r] != 8 ) &&
+              ( candidates[r] != 6 ) &&
+              ( candidates[r] != 15 ) &&
+              ( candidates[r] != 48 ) &&
+              ( candidates[r] != 57 ) &&
+              ( candidates[r] != 55 ) &&
+              ( candidates[r] != 62 ) )
+         {
+           return (candidates[r]);
+         }
+
+         if ( ( candidates[r] == 9 ) && (cells[0]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 14 ) && (cells[7]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 49 ) && (cells[56]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 54 ) && (cells[63]==2) )
+         {
+           return (candidates[r]);
+         }                   
+
+         if ( ( candidates[r] == 1 ) && (cells[0]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 8 ) && (cells[0]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 6 ) && (cells[7]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 15 ) && (cells[7]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 48 ) && (cells[56]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 57 ) && (cells[56]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 55 ) && (cells[63]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 62 ) && (cells[63]==2) )
+         {
+           return (candidates[r]);
+         }                   
+
+         r = rand(cnt);
+
+         if ( ( candidates[r] != 9 ) && 
+              ( candidates[r] != 14 ) && 
+              ( candidates[r] != 49 ) &&
+              ( candidates[r] != 54 ) &&
+              ( candidates[r] != 1 ) &&
+              ( candidates[r] != 8 ) &&
+              ( candidates[r] != 6 ) &&
+              ( candidates[r] != 15 ) &&
+              ( candidates[r] != 48 ) &&
+              ( candidates[r] != 57 ) &&
+              ( candidates[r] != 55 ) &&
+              ( candidates[r] != 62 ) )
+         {
+           return (candidates[r]);
+         }
+
+         if ( ( candidates[r] == 9 ) && (cells[0]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 14 ) && (cells[7]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 49 ) && (cells[56]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 54 ) && (cells[63]==2) )
+         {
+           return (candidates[r]);
+         }                   
+
+         if ( ( candidates[r] == 1 ) && (cells[0]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 8 ) && (cells[0]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 6 ) && (cells[7]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 15 ) && (cells[7]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 48 ) && (cells[56]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 57 ) && (cells[56]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 55 ) && (cells[63]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 62 ) && (cells[63]==2) )
+         {
+           return (candidates[r]);
+         }                   
+
+         r = rand(cnt);
+
+         if ( ( candidates[r] != 9 ) && 
+              ( candidates[r] != 14 ) && 
+              ( candidates[r] != 49 ) &&
+              ( candidates[r] != 54 ) &&
+              ( candidates[r] != 1 ) &&
+              ( candidates[r] != 8 ) &&
+              ( candidates[r] != 6 ) &&
+              ( candidates[r] != 15 ) &&
+              ( candidates[r] != 48 ) &&
+              ( candidates[r] != 57 ) &&
+              ( candidates[r] != 55 ) &&
+              ( candidates[r] != 62 ) )
+         {
+           return (candidates[r]);
+         }
+
+         if ( ( candidates[r] == 9 ) && (cells[0]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 14 ) && (cells[7]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 49 ) && (cells[56]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 54 ) && (cells[63]==2) )
+         {
+           return (candidates[r]);
+         }                   
+
+         if ( ( candidates[r] == 1 ) && (cells[0]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 8 ) && (cells[0]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 6 ) && (cells[7]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 15 ) && (cells[7]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 48 ) && (cells[56]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 57 ) && (cells[56]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 55 ) && (cells[63]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 62 ) && (cells[63]==2) )
+         {
+           return (candidates[r]);
+         }                   
+
+         r = rand(cnt);
+
+         if ( ( candidates[r] != 9 ) && 
+              ( candidates[r] != 14 ) && 
+              ( candidates[r] != 49 ) &&
+              ( candidates[r] != 54 ) &&
+              ( candidates[r] != 1 ) &&
+              ( candidates[r] != 8 ) &&
+              ( candidates[r] != 6 ) &&
+              ( candidates[r] != 15 ) &&
+              ( candidates[r] != 48 ) &&
+              ( candidates[r] != 57 ) &&
+              ( candidates[r] != 55 ) &&
+              ( candidates[r] != 62 ) )
+         {
+           return (candidates[r]);
+         }
+
+         if ( ( candidates[r] == 9 ) && (cells[0]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 14 ) && (cells[7]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 49 ) && (cells[56]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 54 ) && (cells[63]==2) )
+         {
+           return (candidates[r]);
+         }                   
+
+         if ( ( candidates[r] == 1 ) && (cells[0]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 8 ) && (cells[0]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 6 ) && (cells[7]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 15 ) && (cells[7]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 48 ) && (cells[56]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 57 ) && (cells[56]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 55 ) && (cells[63]==2) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 62 ) && (cells[63]==2) )
+         {
+           return (candidates[r]);
+         }                   
+
+         r = rand(cnt);
+
+         if ( ( candidates[r] != 9 ) && 
+              ( candidates[r] != 14 ) && 
+              ( candidates[r] != 49 ) &&
+              ( candidates[r] != 54 ) &&
+              ( candidates[r] != 1 ) &&
+              ( candidates[r] != 8 ) &&
+              ( candidates[r] != 6 ) &&
+              ( candidates[r] != 15 ) &&
+              ( candidates[r] != 48 ) &&
+              ( candidates[r] != 57 ) &&
+              ( candidates[r] != 55 ) &&
+              ( candidates[r] != 62 ) )
+         {
+           return (candidates[r]);
+         }
+
+         for (i=0; i<num_candidates; i++)
+         {
+           if ( ( candidates[i] != 9 ) && 
+                ( candidates[i] != 14 ) && 
+                ( candidates[i] != 49 ) &&
+                ( candidates[i] != 54 ) &&
+                ( candidates[i] != 1 ) &&
+                ( candidates[i] != 8 ) &&
+                ( candidates[i] != 6 ) &&
+                ( candidates[i] != 15 ) &&
+                ( candidates[i] != 48 ) &&
+                ( candidates[i] != 57 ) &&
+                ( candidates[i] != 55 ) &&
+                ( candidates[i] != 62 ) )
+           {
+             return (candidates[i]);
+           }
+         }
+
+         if ( ( candidates[r] == 1 ) && (cells[0]==0) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 8 ) && (cells[0]==0) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 6 ) && (cells[7]==0) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 15 ) && (cells[7]==0) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 48 ) && (cells[56]==0) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 57 ) && (cells[56]==0) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 55 ) && (cells[63]==0) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 62 ) && (cells[63]==0) )
+         {
+           return (candidates[r]);
+         }                   
+
+
+         r = rand(cnt);
+
+         if ( ( candidates[r] != 9 ) && 
+              ( candidates[r] != 14 ) && 
+              ( candidates[r] != 49 ) &&
+              ( candidates[r] != 54 ) &&
+              ( candidates[r] != 1 ) &&
+              ( candidates[r] != 8 ) &&
+              ( candidates[r] != 6 ) &&
+              ( candidates[r] != 15 ) &&
+              ( candidates[r] != 48 ) &&
+              ( candidates[r] != 57 ) &&
+              ( candidates[r] != 55 ) &&
+              ( candidates[r] != 62 ) )
+         {
+           return (candidates[r]);
+         }
+
+         if ( ( candidates[r] == 1 ) && (cells[0]==0) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 8 ) && (cells[0]==0) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 6 ) && (cells[7]==0) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 15 ) && (cells[7]==0) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 48 ) && (cells[56]==0) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 57 ) && (cells[56]==0) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 55 ) && (cells[63]==0) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 62 ) && (cells[63]==0) )
+         {
+           return (candidates[r]);
+         }                   
+
+         if ( ( candidates[r] == 9 ) && (cells[0]==0) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 14 ) && (cells[7]==0) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 49 ) && (cells[56]==0) )
+         {
+           return (candidates[r]);
+         }                   
+         if ( ( candidates[r] == 54 ) && (cells[63]==0) )
+         {
+           return (candidates[r]);
+         }                   
+
+         return (candidates[r]);
+       }
+
+       function BuildCandidates(phase)
+       {
+         var count=0;
+         var i,x,y;
+
+         num_candidates=0;
+
+         for (i=0; i<num_cells; i++)
+         {
+           x = i % num_columns;
+           y = Math.floor(i / num_columns);
+
+           count = CheckSquare(x,y,phase);
+
+           if ( count > 0 )
+           {
+             candidates[num_candidates]=i;
+             num_candidates++;
+           }
+         }
+
+         return num_candidates;
+       }
+
+       function RecomputeVars(x,y,count)
+       {
+         var i,j,c1,c2,str;
+
+         i = x + (y*num_columns);
+         cells[i]=phase;
+
+         document.getElementById("Pass").disabled = true;
+         document.getElementById("StatusId").value = "";
+
+         if (phase==1)
+         {
+           totals[1]+=(count+1);
+           totals[2]-=count;
+           phase=2;
+         }
+         else if (phase==2)
+         {
+           totals[2]+=(count+1);
+           totals[1]-=count;
+           phase=1;
+         }
+
+         options[1]=0;
+         options[2]=0;
+
+         for (j=0; j<num_cells; j++)
+         {
+           if ( cells[j] != 0 )
+           {
+             continue;
+           }
+           x = j % num_columns;
+           y = Math.floor(j / num_columns);
+
+           c1 = CheckSquare(x,y,1);
+           if ( c1 > 0 ) options[1]++;
+           c2 = CheckSquare(x,y,2);
+           if ( c2 > 0 ) options[2]++;
+         }
+         totals[0]--;
+         if ( (options[1]==0) && (options[2]==0))
+         {
+           document.getElementById("Pass").disabled = true;
+           document.getElementById("Undo").disabled = true;
+           if ( totals[1] == totals[2] )
+           { 
+             document.getElementById("StatusId").style.color = '#000066';
+             str = "                Draw!!  Let's try another one!!";
+           }
+           else if ( totals[1] > totals[2] )
+           { 
+             document.getElementById("StatusId").style.color = '#008800';
+             str = "                Congratulations!!  You won!!";
+           }
+           else if ( totals[2] > totals[1] )
+           { 
+             document.getElementById("StatusId").style.color = '#880000';
+             str = "                Sorry!!  The computer won!!";
+           }
+           document.getElementById("StatusId").value = str;
+           game_ended=1;
+         }
+         else if ( (options[1]==0) && (phase==1))
+         {
+           document.getElementById("Pass").disabled = false;
+           document.getElementById("StatusId").style.color = '#ff0000';
+           document.getElementById("StatusId").value = "You have no legal moves, Click on the 'Pass' button!";
+         }
+         else if ( (options[2]==0) && (phase==2))
+         {
+           PassTurn();
+           document.getElementById("StatusId").style.color = '#ff0000';
+           document.getElementById("StatusId").value = "Computer has no legal moves! It is your turn again";
+         }
+
+         if ( game_ended == 1 )
+         {
+           document.getElementById("CurrPlay").innerHTML = "";
+           document.getElementById("TurnId").innerHTML = "";
+           document.getElementById("a1").className = "ClassTotal1";
+           document.getElementById("a2").className = "ClassTotal2";
+         }
+       }
+
+       function UndoMove()
+       {
+         if ( game_ended== 1 ) return;
+         RestoreCells();
+         Redraw();
+         RedrawVars();
+       }
+
+       function HandleMouseOver(x,y)
+       {
+         if ( game_ended== 1 ) return;
+         if ( state == 1 ) return;
+
+         var count=0;
+
+         capture_len=0;
+         count = CheckSquare(x,y,phase);
+         if ( count > 0 )
+         {
+           var nx,ny,i,ind;
+           var n = 'td' + '-' + x + '-' + y;
+           document.getElementById(n).className="cellover"+phase;
+
+           for (i=0;i<capture_len;i++)
+           {
+             ind=capture[i];
+             nx = ind % num_columns;
+             ny = Math.floor(ind / num_columns);
+             n = 'td' + '-' + nx + '-' + ny;
+             document.getElementById(n).className="cellover"+phase;
+           }
+         }
+       }
+
+       function CheckSquare(x,y,val)
+       {
+         var i,count=0,total_count=0;
+         var ur=0,dr=0,ul=0,dl=0;      
+         var u=0,d=0,l=0,r=0;      
+
+         i = x + (y*num_columns);
+         
+         if ( cells[i]==0 )
+         {
+           
+           count = CheckUpRight(x,y,val,1);
+           if ( count > 0 )
+           {
+             total_count += count;
+             ur=count;
+           }
+
+           count = CheckDownRight(x,y,val,1);
+           if ( count > 0 )
+           {
+             total_count += count;
+             dr=count;
+           }
+
+           count = CheckUpLeft(x,y,val,1);
+           if ( count > 0 )
+           {
+             total_count += count;
+             ul=count;
+           }
+
+           count = CheckDownLeft(x,y,val,1);
+           if ( count > 0 )
+           {
+             total_count += count;
+             dl=count;
+           }
+
+           count = CheckUp(x,y,val,1);
+           if ( count > 0 )
+           {
+             total_count += count;
+             u=count;
+           }
+
+           count = CheckDown(x,y,val,1);
+           if ( count > 0 )
+           {
+             total_count += count;
+             d=count;
+           }
+
+           count = CheckLeft(x,y,val,1);
+           if ( count > 0 )
+           {
+             total_count += count;
+             l=count;
+           }
+
+           count = CheckRight(x,y,val,1);
+           if ( count > 0 )
+           {
+             total_count += count;
+             r=count;
+           }
+         }
+
+         return total_count;
+       }
+
+       function InvertSquare(x,y,val)
+       {
+         var i,count=0,total_count=0;
+         i = x + (y*num_columns);
+
+         if ( cells[i]==0 )
+         {
+           count = CheckUpRight(x,y,val,0);
+           if ( count > 0 )
+           {
+             total_count += count;
+             InvertUpRight(x,y,val);
+           }
+
+           count = CheckDownRight(x,y,val,0);
+           if ( count > 0 )
+           {
+             total_count += count;
+             InvertDownRight(x,y,val);
+           }
+
+           count = CheckUpLeft(x,y,val,0);
+           if ( count > 0 )
+           {
+             total_count += count;
+             InvertUpLeft(x,y,val);
+           }
+
+           count = CheckDownLeft(x,y,val,0);
+           if ( count > 0 )
+           {
+             total_count += count;
+             InvertDownLeft(x,y,val);
+           }
+
+           count = CheckUp(x,y,val,0);
+           if ( count > 0 )
+           {
+             total_count += count;
+             InvertUp(x,y,val);
+           }
+
+           count = CheckDown(x,y,val,0);
+           if ( count > 0 )
+           {
+             total_count += count;
+             InvertDown(x,y,val);
+           }
+
+           count = CheckLeft(x,y,val,0);
+           if ( count > 0 )
+           {
+             total_count += count;
+             InvertLeft(x,y,val);
+           }
+
+           count = CheckRight(x,y,val,0);
+           if ( count > 0 )
+           {
+             total_count += count;
+             InvertRight(x,y,val);
+           }
+         }
+
+         return total_count;
+       }
+
+       function CheckUpRight(x,y,val,hlight)
+       {
+         var i,iy,ix,count=0,endval=0;
+         
+         if ( ( y > 0 ) && ( x < num_columns-1 ) )
+         {
+           for (iy=y-1,ix=x+1; iy>=0 && ix<num_columns; iy--,ix++)
+           {
+             i = ix + (iy*num_columns);
+             if ( cells[i]==0 )
+             {
+               break;
+             }
+             else if ( cells[i]==val )
+             {
+               endval=val;
+               break;
+             }
+             else
+             {
+               count++;
+               if (hlight==1)
+               {
+                 capture[capture_len]=i;
+                 capture_len++;
+               }
+             }
+           }
+         }
+
+         if ( endval== 0 )
+         {
+           if (hlight==1)
+           {
+             capture_len -=count;
+           }
+           count=0; 
+         }
+
+         return count;
+       }
+
+       function InvertUpRight(x,y,val)
+       {
+         var i,ix,iy;
+         
+         if ( ( y > 0 ) && ( x < num_columns-1 ) )
+         {
+           for (iy=y-1,ix=x+1; iy>=0 && ix<num_columns; iy--,ix++)
+           {
+             i = ix + (iy*num_columns);
+             if ( cells[i]==0 )
+             {
+               break;
+             }
+             else if ( cells[i]==val )
+             {
+               break;
+             }
+             else
+             {
+               cells[i]=val;
+             }
+           }
+         }
+       }
+
+       function CheckDownRight(x,y,val,hlight)
+       {
+         var i,iy,ix,count=0,endval=0;
+         
+         if ( ( y <num_lines-1 ) && ( x < num_columns-1 ) )
+         {
+           for (iy=y+1,ix=x+1; iy<num_lines && ix<num_columns; iy++,ix++)
+           {
+             i = ix + (iy*num_columns);
+             if ( cells[i]==0 )
+             {
+               break;
+             }
+             else if ( cells[i]==val )
+             {
+               endval=val;
+               break;
+             }
+             else
+             {
+               if (hlight==1)
+               {
+                 capture[capture_len]=i;
+                 capture_len++;
+               }
+               count++;
+             }
+           }
+         }
+
+         if ( endval== 0 )
+         {
+           if (hlight==1)
+           {
+             capture_len -=count;
+           }
+           count=0;
+         }
+
+         return count;
+       }
+
+       function InvertDownRight(x,y,val)
+       {
+         var i,ix,iy;
+         
+         if ( ( y < num_lines-1 ) && ( x < num_columns-1 ) )
+         {
+           for (iy=y+1,ix=x+1; iy<num_lines && ix<num_columns; iy++,ix++)
+           {
+             i = ix + (iy*num_columns);
+             if ( cells[i]==0 )
+             {
+               break;
+             }
+             else if ( cells[i]==val )
+             {
+               break;
+             }
+             else
+             {
+               cells[i]=val;
+             }
+           }
+         }
+       }
+
+
+       function CheckUpLeft(x,y,val,hlight)
+       {
+         var i,iy,ix,count=0,endval=0;
+         
+         if ( ( y > 0 ) && ( x > 0 ) )
+         {
+           for (iy=y-1,ix=x-1; iy>=0 && ix>=0; iy--,ix--)
+           {
+             i = ix + (iy*num_columns);
+             if ( cells[i]==0 )
+             {
+               break;
+             }
+             else if ( cells[i]==val )
+             {
+               endval=val;
+               break;
+             }
+             else
+             {
+               if (hlight==1)
+               {
+                 capture[capture_len]=i;
+                 capture_len++;
+               }
+               count++;
+             }
+           }
+         }
+
+         if ( endval== 0 )
+         {
+           if (hlight==1)
+           {
+             capture_len -=count;
+           }
+           count=0;
+         }
+
+         return count;
+       }
+
+       function InvertUpLeft(x,y,val)
+       {
+         var i,ix,iy;
+         
+         if ( ( y > 0 ) && ( x > 0 ) )
+         {
+           for (iy=y-1,ix=x-1; iy>=0 && ix>=0; iy--,ix--)
+           {
+             i = ix + (iy*num_columns);
+             if ( cells[i]==0 )
+             {
+               break;
+             }
+             else if ( cells[i]==val )
+             {
+               break;
+             }
+             else
+             {
+               cells[i]=val;
+             }
+           }
+         }
+       }
+
+       function CheckDownLeft(x,y,val,hlight)
+       {
+         var i,iy,ix,count=0,endval=0;
+         
+         if ( ( y <num_lines-1 ) && ( x >0 ) )
+         {
+           for (iy=y+1,ix=x-1; iy<num_lines && ix>=0; iy++,ix--)
+           {
+             i = ix + (iy*num_columns);
+             if ( cells[i]==0 )
+             {
+               break;
+             }
+             else if ( cells[i]==val )
+             {
+               endval=val;
+               break;
+             }
+             else
+             {
+               if (hlight==1)
+               {
+                 capture[capture_len]=i;
+                 capture_len++;
+               }
+               count++;
+             }
+           }
+         }
+
+         if ( endval== 0 )
+         {
+           if (hlight==1)
+           {
+             capture_len -=count;
+           }
+           count=0;
+         }
+
+         return count;
+       }
+
+       function InvertDownLeft(x,y,val)
+       {
+         var i,ix,iy;
+         
+         if ( ( y < num_lines-1 ) && ( x > 0 ) )
+         {
+           for (iy=y+1,ix=x-1; iy<num_lines && ix>=0; iy++,ix--)
+           {
+             i = ix + (iy*num_columns);
+             if ( cells[i]==0 )
+             {
+               break;
+             }
+             else if ( cells[i]==val )
+             {
+               break;
+             }
+             else
+             {
+               cells[i]=val;
+             }
+           }
+         }
+       }
+
+
+       function CheckUp(x,y,val,hlight)
+       {
+         var i,iy,count=0,endval=0;
+         
+         if ( y > 0 )
+         {
+           for (iy=y-1; iy>=0; iy--)
+           {
+             i = x + (iy*num_columns);
+             if ( cells[i]==0 )
+             {
+               break;
+             }
+             else if ( cells[i]==val )
+             {
+               endval=val;
+               break;
+             }
+             else
+             {
+               if (hlight==1)
+               {
+                 capture[capture_len]=i;
+                 capture_len++;
+               }
+               count++;
+             }
+           }
+         }
+
+         if ( endval== 0 )
+         {
+           if (hlight==1)
+           {
+             capture_len -=count;
+           }
+           count=0;
+         }
+
+         return count;
+       }
+
+       function InvertUp(x,y,val)
+       {
+         var i,iy;
+         
+         if ( y > 0 )
+         {
+           for (iy=y-1; iy>=0; iy--)
+           {
+             i = x + (iy*num_columns);
+             if ( cells[i]==0 )
+             {
+               break;
+             }
+             else if ( cells[i]==val )
+             {
+               break;
+             }
+             else
+             {
+               cells[i]=val;
+             }
+           }
+         }
+       }
+
+       function CheckDown(x,y,val,hlight)
+       {
+         var i,iy,count=0,endval=0;
+         
+         for (iy=y+1; iy<num_lines; iy++)
+         {
+           i = x + (iy*num_columns);
+           if ( cells[i]==0 )
+           {
+             break;
+           }
+           else if ( cells[i]==val )
+           {
+             endval=val;
+             break;
+           }
+           else
+           {
+             if (hlight==1)
+             {
+               capture[capture_len]=i;
+               capture_len++;
+             }
+             count++;
+           }
+         }
+
+         if ( endval== 0 )
+         {
+           if (hlight==1)
+           {
+             capture_len -=count;
+           }
+           count=0;
+         }
+
+         return count;
+       }
+
+
+       function InvertDown(x,y,val)
+       {
+         var i,iy;
+         
+         if ( y < num_lines-1 )
+         {
+           for (iy=y+1; iy<num_lines; iy++)
+           {
+             i = x + (iy*num_columns);
+             if ( cells[i]==0 )
+             {
+               break;
+             }
+             else if ( cells[i]==val )
+             {
+               break;
+             }
+             else
+             {
+               cells[i]=val;
+             }
+           }
+         }
+       }
+
+       function CheckLeft(x,y,val,hlight)
+       {
+         var i,ix,count=0,endval=0;
+         
+         if ( x > 0 )
+         {
+           for (ix=x-1; ix>=0; ix--)
+           {
+             i = ix + (y*num_columns);
+             if ( cells[i]==0 )
+             {
+               break;
+             }
+             else if ( cells[i]==val )
+             {
+               endval=val;
+               break;
+             }
+             else
+             {
+               if (hlight==1)
+               {
+                 capture[capture_len]=i;
+                 capture_len++;
+               }
+               count++;
+             }
+           }
+         }
+
+         if ( endval== 0 )
+         {
+           if (hlight==1)
+           {
+             capture_len -=count;
+           }
+           count=0;
+         }
+
+         return count;
+       }
+
+       function InvertLeft(x,y,val)
+       {
+         var i,ix;
+         
+         if ( x > 0 )
+         {
+           for (ix=x-1; ix>=0; ix--)
+           {
+             i = ix + (y*num_columns);
+             if ( cells[i]==0 )
+             {
+               break;
+             }
+             else if ( cells[i]==val )
+             {
+               break;
+             }
+             else
+             {
+               cells[i]=val;
+             }
+           }
+         }
+       }
+
+       function CheckRight(x,y,val,hlight)
+       {
+         var i,ix,count=0,endval=0;
+         
+         if ( x < num_columns-1 )
+         {
+           for (ix=x+1; ix<num_columns; ix++)
+           {
+             i = ix + (y*num_columns);
+             if ( cells[i]==0 )
+             {
+               break;
+             }
+             else if ( cells[i]==val )
+             {
+               endval=val;
+               break;
+             }
+             else
+             {
+               if (hlight==1)
+               {
+                 capture[capture_len]=i;
+                 capture_len++;
+               }
+               count++;
+             }
+           }
+         }
+
+         if ( endval== 0 )
+         {
+           if (hlight==1)
+           {
+             capture_len -=count;
+           }
+           count=0;
+         }
+
+         return count;
+       }
+
+       function InvertRight(x,y,val)
+       {
+         var i,ix;
+         
+         if ( x < num_columns-1 )
+         {
+           for (ix=x+1; ix<num_columns; ix++)
+           {
+             i = ix + (y*num_columns);
+             if ( cells[i]==0 )
+             {
+               break;
+             }
+             else if ( cells[i]==val )
+             {
+               break;
+             }
+             else
+             {
+               cells[i]=val;
+             }
+           }
+         }
+       }
+
+       function HandleMouseOut(x,y)
+       {
+         if ( game_ended== 1 ) return;
+         if ( state == 1 ) return;
+
+         UnSelect(x,y);
+       }
+
+       function UnSelect(x,y)
+       {
+         var nx,ny,i,ind;
+         var n = 'td' + '-' + x + '-' + y;
+
+         document.getElementById(n).className="cellout";
+
+         for (i=0;i<capture_len;i++)   
+         {
+           ind=capture[i];
+           nx = ind % num_columns;
+           ny = Math.floor(ind / num_columns);
+           n = 'td' + '-' + nx + '-' + ny;
+           document.getElementById(n).className="cellout";
+         }
+         capture_len=0;
+       }
+
+      -->
+    </script>
+
+
+
+  </head>
+
+  <body  bgcolor="#E0DEE1">
+
+    <br>
+    <center><img src="ReversiAiImages/reversilogo.png" alt="Mountain View" style="width:250px;height:150px">
+
+    </center>
+
+    <table align="center">
+      <tr>
+        <td valign='top'>
+          <br>
+        </td>
+        <td>
+          <table border='0'>
+            <tr>
+              <td>
+ <table cellspacing=0 cellpadding=0 border='0' align='center'>
+        <tr>
+            <td align='center' id=td-0-0 class='cellout'>
+                <img id='I0-0'
+                     name='I0-0'
+                     onclick='HandleSquare(0,0)'
+                     onmouseover='HandleMouseOver(0,0)'
+                     onmouseout='HandleMouseOut(0,0)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_2.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-1-0 class='cellout'>
+                <img id='I1-0'
+                     name='I1-0'
+                     onclick='HandleSquare(1,0)'
+                     onmouseover='HandleMouseOver(1,0)'
+                     onmouseout='HandleMouseOut(1,0)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_1.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-2-0 class='cellout'>
+                <img id='I2-0'
+                     name='I2-0'
+                     onclick='HandleSquare(2,0)'
+                     onmouseover='HandleMouseOver(2,0)'
+                     onmouseout='HandleMouseOut(2,0)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_2.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-3-0 class='cellout'>
+                <img id='I3-0'
+                     name='I3-0'
+                     onclick='HandleSquare(3,0)'
+                     onmouseover='HandleMouseOver(3,0)'
+                     onmouseout='HandleMouseOut(3,0)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_1.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-4-0 class='cellout'>
+                <img id='I4-0'
+                     name='I4-0'
+                     onclick='HandleSquare(4,0)'
+                     onmouseover='HandleMouseOver(4,0)'
+                     onmouseout='HandleMouseOut(4,0)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_2.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-5-0 class='cellout'>
+                <img id='I5-0'
+                     name='I5-0'
+                     onclick='HandleSquare(5,0)'
+                     onmouseover='HandleMouseOver(5,0)'
+                     onmouseout='HandleMouseOut(5,0)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_1.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-6-0 class='cellout'>
+                <img id='I6-0'
+                     name='I6-0'
+                     onclick='HandleSquare(6,0)'
+                     onmouseover='HandleMouseOver(6,0)'
+                     onmouseout='HandleMouseOut(6,0)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_2.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-7-0 class='cellout'>
+                <img id='I7-0'
+                     name='I7-0'
+                     onclick='HandleSquare(7,0)'
+                     onmouseover='HandleMouseOver(7,0)'
+                     onmouseout='HandleMouseOut(7,0)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_1.png'
+                     alt=''
+                     title=''>
+            </td>
+        </tr>
+        <tr>
+            <td align='center' id=td-0-1 class='cellout'>
+                <img id='I0-1'
+                     name='I0-1'
+                     onclick='HandleSquare(0,1)'
+                     onmouseover='HandleMouseOver(0,1)'
+                     onmouseout='HandleMouseOut(0,1)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_1.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-1-1 class='cellout'>
+                <img id='I1-1'
+                     name='I1-1'
+                     onclick='HandleSquare(1,1)'
+                     onmouseover='HandleMouseOver(1,1)'
+                     onmouseout='HandleMouseOut(1,1)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_2.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-2-1 class='cellout'>
+                <img id='I2-1'
+                     name='I2-1'
+                     onclick='HandleSquare(2,1)'
+                     onmouseover='HandleMouseOver(2,1)'
+                     onmouseout='HandleMouseOut(2,1)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_1.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-3-1 class='cellout'>
+                <img id='I3-1'
+                     name='I3-1'
+                     onclick='HandleSquare(3,1)'
+                     onmouseover='HandleMouseOver(3,1)'
+                     onmouseout='HandleMouseOut(3,1)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_2.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-4-1 class='cellout'>
+                <img id='I4-1'
+                     name='I4-1'
+                     onclick='HandleSquare(4,1)'
+                     onmouseover='HandleMouseOver(4,1)'
+                     onmouseout='HandleMouseOut(4,1)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_1.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-5-1 class='cellout'>
+                <img id='I5-1'
+                     name='I5-1'
+                     onclick='HandleSquare(5,1)'
+                     onmouseover='HandleMouseOver(5,1)'
+                     onmouseout='HandleMouseOut(5,1)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_2.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-6-1 class='cellout'>
+                <img id='I6-1'
+                     name='I6-1'
+                     onclick='HandleSquare(6,1)'
+                     onmouseover='HandleMouseOver(6,1)'
+                     onmouseout='HandleMouseOut(6,1)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_1.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-7-1 class='cellout'>
+                <img id='I7-1'
+                     name='I7-1'
+                     onclick='HandleSquare(7,1)'
+                     onmouseover='HandleMouseOver(7,1)'
+                     onmouseout='HandleMouseOut(7,1)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_2.png'
+                     alt=''
+                     title=''>
+            </td>
+        </tr>
+        <tr>
+            <td align='center' id=td-0-2 class='cellout'>
+                <img id='I0-2'
+                     name='I0-2'
+                     onclick='HandleSquare(0,2)'
+                     onmouseover='HandleMouseOver(0,2)'
+                     onmouseout='HandleMouseOut(0,2)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_2.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-1-2 class='cellout'>
+                <img id='I1-2'
+                     name='I1-2'
+                     onclick='HandleSquare(1,2)'
+                     onmouseover='HandleMouseOver(1,2)'
+                     onmouseout='HandleMouseOut(1,2)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_1.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-2-2 class='cellout'>
+                <img id='I2-2'
+                     name='I2-2'
+                     onclick='HandleSquare(2,2)'
+                     onmouseover='HandleMouseOver(2,2)'
+                     onmouseout='HandleMouseOut(2,2)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_2.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-3-2 class='cellout'>
+                <img id='I3-2'
+                     name='I3-2'
+                     onclick='HandleSquare(3,2)'
+                     onmouseover='HandleMouseOver(3,2)'
+                     onmouseout='HandleMouseOut(3,2)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_1.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-4-2 class='cellout'>
+                <img id='I4-2'
+                     name='I4-2'
+                     onclick='HandleSquare(4,2)'
+                     onmouseover='HandleMouseOver(4,2)'
+                     onmouseout='HandleMouseOut(4,2)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_2.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-5-2 class='cellout'>
+                <img id='I5-2'
+                     name='I5-2'
+                     onclick='HandleSquare(5,2)'
+                     onmouseover='HandleMouseOver(5,2)'
+                     onmouseout='HandleMouseOut(5,2)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_1.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-6-2 class='cellout'>
+                <img id='I6-2'
+                     name='I6-2'
+                     onclick='HandleSquare(6,2)'
+                     onmouseover='HandleMouseOver(6,2)'
+                     onmouseout='HandleMouseOut(6,2)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_2.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-7-2 class='cellout'>
+                <img id='I7-2'
+                     name='I7-2'
+                     onclick='HandleSquare(7,2)'
+                     onmouseover='HandleMouseOver(7,2)'
+                     onmouseout='HandleMouseOut(7,2)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_1.png'
+                     alt=''
+                     title=''>
+            </td>
+        </tr>
+        <tr>
+            <td align='center' id=td-0-3 class='cellout'>
+                <img id='I0-3'
+                     name='I0-3'
+                     onclick='HandleSquare(0,3)'
+                     onmouseover='HandleMouseOver(0,3)'
+                     onmouseout='HandleMouseOut(0,3)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_1.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-1-3 class='cellout'>
+                <img id='I1-3'
+                     name='I1-3'
+                     onclick='HandleSquare(1,3)'
+                     onmouseover='HandleMouseOver(1,3)'
+                     onmouseout='HandleMouseOut(1,3)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_2.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-2-3 class='cellout'>
+                <img id='I2-3'
+                     name='I2-3'
+                     onclick='HandleSquare(2,3)'
+                     onmouseover='HandleMouseOver(2,3)'
+                     onmouseout='HandleMouseOut(2,3)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_1.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-3-3 class='cellout'>
+                <img id='I3-3'
+                     name='I3-3'
+                     onclick='HandleSquare(3,3)'
+                     onmouseover='HandleMouseOver(3,3)'
+                     onmouseout='HandleMouseOut(3,3)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_2.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-4-3 class='cellout'>
+                <img id='I4-3'
+                     name='I4-3'
+                     onclick='HandleSquare(4,3)'
+                     onmouseover='HandleMouseOver(4,3)'
+                     onmouseout='HandleMouseOut(4,3)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_1.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-5-3 class='cellout'>
+                <img id='I5-3'
+                     name='I5-3'
+                     onclick='HandleSquare(5,3)'
+                     onmouseover='HandleMouseOver(5,3)'
+                     onmouseout='HandleMouseOut(5,3)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_2.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-6-3 class='cellout'>
+                <img id='I6-3'
+                     name='I6-3'
+                     onclick='HandleSquare(6,3)'
+                     onmouseover='HandleMouseOver(6,3)'
+                     onmouseout='HandleMouseOut(6,3)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_1.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-7-3 class='cellout'>
+                <img id='I7-3'
+                     name='I7-3'
+                     onclick='HandleSquare(7,3)'
+                     onmouseover='HandleMouseOver(7,3)'
+                     onmouseout='HandleMouseOut(7,3)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_2.png'
+                     alt=''
+                     title=''>
+            </td>
+        </tr>
+        <tr>
+            <td align='center' id=td-0-4 class='cellout'>
+                <img id='I0-4'
+                     name='I0-4'
+                     onclick='HandleSquare(0,4)'
+                     onmouseover='HandleMouseOver(0,4)'
+                     onmouseout='HandleMouseOut(0,4)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_2.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-1-4 class='cellout'>
+                <img id='I1-4'
+                     name='I1-4'
+                     onclick='HandleSquare(1,4)'
+                     onmouseover='HandleMouseOver(1,4)'
+                     onmouseout='HandleMouseOut(1,4)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_1.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-2-4 class='cellout'>
+                <img id='I2-4'
+                     name='I2-4'
+                     onclick='HandleSquare(2,4)'
+                     onmouseover='HandleMouseOver(2,4)'
+                     onmouseout='HandleMouseOut(2,4)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_2.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-3-4 class='cellout'>
+                <img id='I3-4'
+                     name='I3-4'
+                     onclick='HandleSquare(3,4)'
+                     onmouseover='HandleMouseOver(3,4)'
+                     onmouseout='HandleMouseOut(3,4)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_1.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-4-4 class='cellout'>
+                <img id='I4-4'
+                     name='I4-4'
+                     onclick='HandleSquare(4,4)'
+                     onmouseover='HandleMouseOver(4,4)'
+                     onmouseout='HandleMouseOut(4,4)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_2.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-5-4 class='cellout'>
+                <img id='I5-4'
+                     name='I5-4'
+                     onclick='HandleSquare(5,4)'
+                     onmouseover='HandleMouseOver(5,4)'
+                     onmouseout='HandleMouseOut(5,4)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_1.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-6-4 class='cellout'>
+                <img id='I6-4'
+                     name='I6-4'
+                     onclick='HandleSquare(6,4)'
+                     onmouseover='HandleMouseOver(6,4)'
+                     onmouseout='HandleMouseOut(6,4)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_2.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-7-4 class='cellout'>
+                <img id='I7-4'
+                     name='I7-4'
+                     onclick='HandleSquare(7,4)'
+                     onmouseover='HandleMouseOver(7,4)'
+                     onmouseout='HandleMouseOut(7,4)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_1.png'
+                     alt=''
+                     title=''>
+            </td>
+        </tr>
+        <tr>
+            <td align='center' id=td-0-5 class='cellout'>
+                <img id='I0-5'
+                     name='I0-5'
+                     onclick='HandleSquare(0,5)'
+                     onmouseover='HandleMouseOver(0,5)'
+                     onmouseout='HandleMouseOut(0,5)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_1.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-1-5 class='cellout'>
+                <img id='I1-5'
+                     name='I1-5'
+                     onclick='HandleSquare(1,5)'
+                     onmouseover='HandleMouseOver(1,5)'
+                     onmouseout='HandleMouseOut(1,5)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_2.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-2-5 class='cellout'>
+                <img id='I2-5'
+                     name='I2-5'
+                     onclick='HandleSquare(2,5)'
+                     onmouseover='HandleMouseOver(2,5)'
+                     onmouseout='HandleMouseOut(2,5)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_1.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-3-5 class='cellout'>
+                <img id='I3-5'
+                     name='I3-5'
+                     onclick='HandleSquare(3,5)'
+                     onmouseover='HandleMouseOver(3,5)'
+                     onmouseout='HandleMouseOut(3,5)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_2.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-4-5 class='cellout'>
+                <img id='I4-5'
+                     name='I4-5'
+                     onclick='HandleSquare(4,5)'
+                     onmouseover='HandleMouseOver(4,5)'
+                     onmouseout='HandleMouseOut(4,5)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_1.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-5-5 class='cellout'>
+                <img id='I5-5'
+                     name='I5-5'
+                     onclick='HandleSquare(5,5)'
+                     onmouseover='HandleMouseOver(5,5)'
+                     onmouseout='HandleMouseOut(5,5)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_2.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-6-5 class='cellout'>
+                <img id='I6-5'
+                     name='I6-5'
+                     onclick='HandleSquare(6,5)'
+                     onmouseover='HandleMouseOver(6,5)'
+                     onmouseout='HandleMouseOut(6,5)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_1.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-7-5 class='cellout'>
+                <img id='I7-5'
+                     name='I7-5'
+                     onclick='HandleSquare(7,5)'
+                     onmouseover='HandleMouseOver(7,5)'
+                     onmouseout='HandleMouseOut(7,5)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_2.png'
+                     alt=''
+                     title=''>
+            </td>
+        </tr>
+        <tr>
+            <td align='center' id=td-0-6 class='cellout'>
+                <img id='I0-6'
+                     name='I0-6'
+                     onclick='HandleSquare(0,6)'
+                     onmouseover='HandleMouseOver(0,6)'
+                     onmouseout='HandleMouseOut(0,6)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_2.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-1-6 class='cellout'>
+                <img id='I1-6'
+                     name='I1-6'
+                     onclick='HandleSquare(1,6)'
+                     onmouseover='HandleMouseOver(1,6)'
+                     onmouseout='HandleMouseOut(1,6)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_1.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-2-6 class='cellout'>
+                <img id='I2-6'
+                     name='I2-6'
+                     onclick='HandleSquare(2,6)'
+                     onmouseover='HandleMouseOver(2,6)'
+                     onmouseout='HandleMouseOut(2,6)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_2.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-3-6 class='cellout'>
+                <img id='I3-6'
+                     name='I3-6'
+                     onclick='HandleSquare(3,6)'
+                     onmouseover='HandleMouseOver(3,6)'
+                     onmouseout='HandleMouseOut(3,6)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_1.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-4-6 class='cellout'>
+                <img id='I4-6'
+                     name='I4-6'
+                     onclick='HandleSquare(4,6)'
+                     onmouseover='HandleMouseOver(4,6)'
+                     onmouseout='HandleMouseOut(4,6)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_2.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-5-6 class='cellout'>
+                <img id='I5-6'
+                     name='I5-6'
+                     onclick='HandleSquare(5,6)'
+                     onmouseover='HandleMouseOver(5,6)'
+                     onmouseout='HandleMouseOut(5,6)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_1.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-6-6 class='cellout'>
+                <img id='I6-6'
+                     name='I6-6'
+                     onclick='HandleSquare(6,6)'
+                     onmouseover='HandleMouseOver(6,6)'
+                     onmouseout='HandleMouseOut(6,6)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_2.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-7-6 class='cellout'>
+                <img id='I7-6'
+                     name='I7-6'
+                     onclick='HandleSquare(7,6)'
+                     onmouseover='HandleMouseOver(7,6)'
+                     onmouseout='HandleMouseOut(7,6)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_1.png'
+                     alt=''
+                     title=''>
+            </td>
+        </tr>
+        <tr>
+            <td align='center' id=td-0-7 class='cellout'>
+                <img id='I0-7'
+                     name='I0-7'
+                     onclick='HandleSquare(0,7)'
+                     onmouseover='HandleMouseOver(0,7)'
+                     onmouseout='HandleMouseOut(0,7)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_1.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-1-7 class='cellout'>
+                <img id='I1-7'
+                     name='I1-7'
+                     onclick='HandleSquare(1,7)'
+                     onmouseover='HandleMouseOver(1,7)'
+                     onmouseout='HandleMouseOut(1,7)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_2.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-2-7 class='cellout'>
+                <img id='I2-7'
+                     name='I2-7'
+                     onclick='HandleSquare(2,7)'
+                     onmouseover='HandleMouseOver(2,7)'
+                     onmouseout='HandleMouseOut(2,7)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_1.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-3-7 class='cellout'>
+                <img id='I3-7'
+                     name='I3-7'
+                     onclick='HandleSquare(3,7)'
+                     onmouseover='HandleMouseOver(3,7)'
+                     onmouseout='HandleMouseOut(3,7)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_2.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-4-7 class='cellout'>
+                <img id='I4-7'
+                     name='I4-7'
+                     onclick='HandleSquare(4,7)'
+                     onmouseover='HandleMouseOver(4,7)'
+                     onmouseout='HandleMouseOut(4,7)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_1.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-5-7 class='cellout'>
+                <img id='I5-7'
+                     name='I5-7'
+                     onclick='HandleSquare(5,7)'
+                     onmouseover='HandleMouseOver(5,7)'
+                     onmouseout='HandleMouseOut(5,7)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_2.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-6-7 class='cellout'>
+                <img id='I6-7'
+                     name='I6-7'
+                     onclick='HandleSquare(6,7)'
+                     onmouseover='HandleMouseOver(6,7)'
+                     onmouseout='HandleMouseOut(6,7)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_1.png'
+                     alt=''
+                     title=''>
+            </td>
+            <td align='center' id=td-7-7 class='cellout'>
+                <img id='I7-7'
+                     name='I7-7'
+                     onclick='HandleSquare(7,7)'
+                     onmouseover='HandleMouseOver(7,7)'
+                     onmouseout='HandleMouseOut(7,7)'
+                     width='40'
+                     height='40'
+                     src='ReversiAiImages/base_2.png'
+                     alt=''
+                     title=''>
+            </td>
+        </tr>
+    </table> 
+                     </td>
+            </tr>
+
+            <tr>
+              <td>
+              <table align="center">
+                <tr><td>&nbsp;</td></tr>
+                <tr>
+                  <td align="center" width='500'>
+                    <table>
+                      <tr>
+                        <td id='a1' class='ClassTurn1' align='center'>
+                          <table align='center'>
+                            <tr>
+                              <td align='center'>
+                                <div align='center'>
+                                  <font color='880055'>You</font>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td align='center'>
+                                <div align='center'>
+                                  <img src='ReversiAiImages/image_1.png' alt='' title=''>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <div class="ScoreTxt1">Total:</div>
+                              </td>
+                              <td>
+                                <div class="ScoreVal1" id="score1">0</div>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                        <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                        <td>
+                          <table align='center'>
+                            <tr>
+                              <td align='center'>
+                                <div id='CurrPlay'>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <div class="ScoreVal1" id="TurnId">
+                                  Your turn
+                                </div>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                        <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                        <td  id='a2' class='ClassTotal2'>
+                          <table>
+                            <tr>
+                              <td align='center'>
+                                <div align='center'>
+                                  <font color='000055'>Computer</font>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td align='center'>
+                                <div align='center'>
+                                  <img src='ReversiAiImages/image_2.png' alt='' title=''>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <div class="ScoreTxt2">Total:</div>
+                              </td>
+                              <td>
+                                <div class="ScoreVal2" id="score2">0</div>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <tr><td>&nbsp;</td></tr>
+
+                <!--tr>
+                  <td align="center" width='500'>
+                    <table>
+                      <tr>
+                        <td>
+                          <div class="ScoreTxt1">Options 1:</div>
+                        </td>
+                        <td>
+                          <div class="ScoreVal1" id="options1">0</div>
+                        </td>
+                        <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                        <td>
+                          <div class="ScoreTxt2">Options 2:</div>
+                        </td>
+                        <td>
+                          <div class="ScoreVal2" id="options2">0</div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr-->
+
+                <tr>
+                  <TD align='center'>
+                    <INPUT TYPE="text"
+                           NAME="StatusName"
+                           Value=""
+                           ID="StatusId"
+                           Class="classStatus"
+                           SIZE="48"> 
+                  </TD>
+                </tr>
+
+                <tr><td>&nbsp;</td></tr>
+
+
+                <TR valign="top">
+                  <td align="center">
+                    <form name="form1" METHOD=POST ACTION="index.php">
+                    <table>
+                      <tr>
+               <!-- <TD align="center">
+                          <INPUT TYPE="submit" 
+                                 NAME="NewGame"
+                                 VALUE="Start New Game">
+                        </TD>--!>
+                        <td>&nbsp;&nbsp;</td>
+                        <TD align="center">
+                          <INPUT TYPE="button" 
+                                 OnClick='PassTurn()' 
+                                 Id="Pass"
+                                 NAME="Pass"
+                                 VALUE="Pass">
+                        </TD>
+                        <td>&nbsp;&nbsp;</td>
+                        <TD align="center">
+                          <INPUT TYPE="button" 
+                                 OnClick='UndoMove()' 
+                                 Id="Undo"
+                                 NAME="Undo"
+                                 VALUE="Undo">
+                        </TD>
+
+
+                      </tr>
+                    </table>
+                    </form>
+                  </td>
+                </tr>
+              </TABLE>
+
+      </td>
+    </tr>
+
+
+    <tr>
+    <td>
+   
+   </td>
+   </tr>
+
+
+
+          </table>
+        </td>
+
+        <!--td>
+          &nbsp;
+          &nbsp;
+          &nbsp;
+          &nbsp;
+        </td-->
+
+        <td valign='top'>
+          <br>
+
+
+        </td>
+      </tr>
+
+
+
+      <tr><td  align="center" colspan="10">&nbsp;</td></tr>
+
+    </table>
+
+    <br><br><br>
+    <hr width="728">
+    
+
+    <input type='hidden' id='NumCells' value='64'>
+    <input type='hidden' id='NumLines' value='8'>
+    <input type='hidden' id='NumColumns' value='8'>
+
+    <input type='hidden'id='Cell0' value='0'><input type='hidden'id='Cell1' value='0'><input type='hidden'id='Cell2' value='0'><input type='hidden'id='Cell3' value='0'><input type='hidden'id='Cell4' value='0'><input type='hidden'id='Cell5' value='0'><input type='hidden'id='Cell6' value='0'><input type='hidden'id='Cell7' value='0'><input type='hidden'id='Cell8' value='0'><input type='hidden'id='Cell9' value='0'><input type='hidden'id='Cell10' value='0'><input type='hidden'id='Cell11' value='0'><input type='hidden'id='Cell12' value='0'><input type='hidden'id='Cell13' value='0'><input type='hidden'id='Cell14' value='0'><input type='hidden'id='Cell15' value='0'><input type='hidden'id='Cell16' value='0'><input type='hidden'id='Cell17' value='0'><input type='hidden'id='Cell18' value='0'><input type='hidden'id='Cell19' value='0'><input type='hidden'id='Cell20' value='0'><input type='hidden'id='Cell21' value='0'><input type='hidden'id='Cell22' value='0'><input type='hidden'id='Cell23' value='0'><input type='hidden'id='Cell24' value='0'><input type='hidden'id='Cell25' value='0'><input type='hidden'id='Cell26' value='0'><input type='hidden'id='Cell27' value='1'><input type='hidden'id='Cell28' value='2'><input type='hidden'id='Cell29' value='0'><input type='hidden'id='Cell30' value='0'><input type='hidden'id='Cell31' value='0'><input type='hidden'id='Cell32' value='0'><input type='hidden'id='Cell33' value='0'><input type='hidden'id='Cell34' value='0'><input type='hidden'id='Cell35' value='2'><input type='hidden'id='Cell36' value='1'><input type='hidden'id='Cell37' value='0'><input type='hidden'id='Cell38' value='0'><input type='hidden'id='Cell39' value='0'><input type='hidden'id='Cell40' value='0'><input type='hidden'id='Cell41' value='0'><input type='hidden'id='Cell42' value='0'><input type='hidden'id='Cell43' value='0'><input type='hidden'id='Cell44' value='0'><input type='hidden'id='Cell45' value='0'><input type='hidden'id='Cell46' value='0'><input type='hidden'id='Cell47' value='0'><input type='hidden'id='Cell48' value='0'><input type='hidden'id='Cell49' value='0'><input type='hidden'id='Cell50' value='0'><input type='hidden'id='Cell51' value='0'><input type='hidden'id='Cell52' value='0'><input type='hidden'id='Cell53' value='0'><input type='hidden'id='Cell54' value='0'><input type='hidden'id='Cell55' value='0'><input type='hidden'id='Cell56' value='0'><input type='hidden'id='Cell57' value='0'><input type='hidden'id='Cell58' value='0'><input type='hidden'id='Cell59' value='0'><input type='hidden'id='Cell60' value='0'><input type='hidden'id='Cell61' value='0'><input type='hidden'id='Cell62' value='0'><input type='hidden'id='Cell63' value='0'>
+    <script language="javascript" 
+            type="TEXT/JAVASCRIPT">
+      Init();
+    </script>
+
+<br/>
+    
+<br/>	
+	
+
+
+  </body>
+</html>
