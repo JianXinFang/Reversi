@@ -1,0 +1,22 @@
+@charset "UTF-8";
+/* CSS Document */
+
+@font-face {
+    font-family: edo;
+    src: url(edosz.ttf);
+}
+
+body {
+	background: #fff url('imgs/bg.jpg') repeat-x 20% 5%;
+	background-size: 1200px 1984px;
+	background-repeat: no-repeat;
+	background-attachment: fixed;
+	background-position: center;
+	background-color: #000000;
+	color: #333333;
+}
+
+div {
+    font-family: edo;
+	line-height: 35px;
+}
