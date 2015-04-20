@@ -1,3 +1,80 @@
+<?php require_once('Connections/reversi.php'); ?>
+<?php
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+?>
+<?php
+// *** Validate request to login to this site.
+if (!isset($_SESSION)) {
+  session_start();
+}
+
+$loginFormAction = $_SERVER['PHP_SELF'];
+if (isset($_GET['accesscheck'])) {
+  $_SESSION['PrevUrl'] = $_GET['accesscheck'];
+}
+
+if (isset($_POST['username'])) {
+  $loginUsername=$_POST['username'];
+  $password=$_POST['password'];
+  $MM_fldUserAuthorization = "usertype";
+  $MM_redirectLoginSuccess = "game.php";
+  $MM_redirectLoginFailed = "loginerror.php";
+  $MM_redirecttoReferrer = false;
+  mysql_select_db($database_reversi, $reversi);
+  	
+  $LoginRS__query=sprintf("SELECT username, password, usertype FROM users WHERE username=%s AND password=%s",
+  GetSQLValueString($loginUsername, "text"), GetSQLValueString($password, "text")); 
+   
+  $LoginRS = mysql_query($LoginRS__query, $reversi) or die(mysql_error());
+  $loginFoundUser = mysql_num_rows($LoginRS);
+  if ($loginFoundUser) {
+    
+    $loginStrGroup  = mysql_result($LoginRS,0,'usertype');
+    
+	if (PHP_VERSION >= 5.1) {session_regenerate_id(true);} else {session_regenerate_id();}
+    //declare two session variables and assign them
+    $_SESSION['MM_Username'] = $loginUsername;
+    $_SESSION['MM_UserGroup'] = $loginStrGroup;	      
+
+    if (isset($_SESSION['PrevUrl']) && false) {
+      $MM_redirectLoginSuccess = $_SESSION['PrevUrl'];	
+    }
+    header("Location: " . $MM_redirectLoginSuccess );
+  }
+  else {
+    header("Location: ". $MM_redirectLoginFailed );
+  }
+}
+?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/normal_page.dwt.php" codeOutsideHTMLIsLocked="false" -->
 <head>
@@ -39,40 +116,33 @@
 </div>
 <div style="position:relative;top:65px;height:1400px;" align="center"><!-- InstanceBeginEditable name="content_area" -->
   <div class="subheader">LOGIN</div>
-  <p>
-  
-  <table width="900" border="0" align="center" class="tbl">
-    <tr>
-      <td width="379" height="54" align="center">Username</td>
-      <td width="268"><form action="" method="post" name="form1" class="logintxtbox" id="form1" >
-        <label for="username"></label>
-        <input name="username" type="text" class="logintxtbox" id="username" />
-      </form></td>
-      <td width="239" rowspan="2" align="center" class="small"><p><u>Forgot<br />
-      Password?</u></p></td>
-    </tr>
-    <tr>
-      <td align="center">Password</td>
-      <td width="200"><form action="" method="post" name="form2" class="logintxtbox" id="form2">
-        <label for="password"></label>
-        <input name="password" type="password" class="logintxtbox" id="password" />
-      </form></td>
-    </tr>
-  </table>
-
-  <p>
-
-  <table width="700" border="0" class="tbl">
-    <tr>
-      <td width="344" align="center" class="small"><p><u>Do not have an account?<br />
-      Register Now!</u> </p></td>
-      <td width="346" align="center"><form id="form3" name="form3" method="post" action="">
-        <input name="confirm" type="submit" class="logintxtbox" id="confirm" value="Confirm" />
-      </form></td>
-    </tr>
-  </table>
-  <p>
-  <!-- InstanceEndEditable --></div>
+  <form id="login" name="login" method="POST" action="<?php echo $loginFormAction; ?>">
+    <table width="900" border="0" align="center" class="tbl">
+      <tr>
+        <td width="379" height="54" align="right">Username&nbsp;</td>
+        <td width="256"><span class="logintxtbox">
+          <input name="username" type="text" class="logintxtbox" id="username" size="35" />
+        </span></td>
+        <td width="251" rowspan="2" align="left" class="small"><p><u>Forgot<br />
+          Password?</u></p></td>
+      </tr>
+      <tr>
+        <td align="right" >Password&nbsp;</td>
+        <td width="256"><span class="logintxtbox">
+          <input name="password" type="password" class="logintxtbox" id="password" size="35" />
+        </span></td>
+      </tr>
+    </table>
+    <table width="425" border="0" class="tbl">
+      <tr>
+        <td width="236" align="center" class="small"><p><u>Do not have an account?<br />
+          Register Now!</u></p></td>
+        <td width="179" align="center"><button class="astext"><u>Login</u></button></td>
+      </tr>
+    </table>
+    <p>&nbsp;</p>
+  </form>
+<!-- InstanceEndEditable --></div>
 <div style="position:relative;top:65px;" align="center"> REVERSI.COM 2015 ALL RIGHT RESERVED
 </div>
 </body>

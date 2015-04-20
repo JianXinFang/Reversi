@@ -37,8 +37,14 @@
 
 <div style="position:relative;top:65px;" align="center"><img src="imgs/reversilogo.png" width="800" height="198" alt="REVERSI" /></div>
 </div>
-<div style="position:relative;top:65px;height:1400px;" align="center"><!-- InstanceBeginEditable name="content_area" -->
-  <p>&nbsp;</p>
+<div style="position:relative;top:65px;height:1400px;" align="center"><!-- InstanceBeginEditable name="content_area" -->  <div class="subheader">
+  <p>LOGIN error</p>
+</div>
+<div class="tbl">
+  <p>Sorry, the username and password you entered do not match.</p>
+  <p>Please make sure you enter them correctly and try again.</p>
+  <p>Click <a href="login.php"><u>here</u></a> to Go back to the login page.</p>
+</div>
 <!-- InstanceEndEditable --></div>
 <div style="position:relative;top:65px;" align="center"> REVERSI.COM 2015 ALL RIGHT RESERVED
 </div>
